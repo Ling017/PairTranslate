@@ -1,3 +1,4 @@
+import { transform } from "esbuild";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "wxt";
 import { OPEN_TRANSLATOR_POPUP_COMMAND } from "./utils/constants";
@@ -39,6 +40,16 @@ export default defineConfig({
 	vite: () => ({
 		plugins: [
 			tailwindcss(),
+			{
+				name: "chrome-content-ascii",
+				async generateBundle(_options, bundle) {
+					for (const output of Object.values(bundle)) {
+						if (output.type === "chunk" && output.fileName.includes("content")) {
+							output.code = (await transform(output.code, { charset: "ascii", target: "esnext", minify: true })).code;
+						}
+					}
+				},
+			},
 			{
 				// Tailwind doesn't provide any official way to convert rem to px, so we do it ourselves
 				name: "vite-plugin-rem-to-px",

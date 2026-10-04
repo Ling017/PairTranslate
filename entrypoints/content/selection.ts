@@ -2,83 +2,30 @@ import { hasMeaningfulChars } from "~/utils/blank";
 import type { SelectEvent } from "./types";
 
 export async function* selectionListener() {
-	let cancel: (() => void) | undefined;
+	let resolve: ((event: SelectEvent) => void) | undefined;
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const notify = (event: MouseEvent | KeyboardEvent | TouchEvent) => {
+		const target = event.target;
+		if (target instanceof Element && target.closest("input, textarea, [contenteditable], [data-pt-container]")) return;
+		if (timer !== undefined) clearTimeout(timer);
+		timer = setTimeout(() => {
+			const selection = window.getSelection();
+			if (!selection?.rangeCount || !hasMeaningfulChars(selection.toString().trim())) return;
+			const rect = selection.getRangeAt(0).getBoundingClientRect();
+			const point = event instanceof MouseEvent ? { x: event.clientX, y: event.clientY } :
+				event instanceof TouchEvent && event.changedTouches[0] ? { x: event.changedTouches[0].clientX, y: event.changedTouches[0].clientY } : { x: rect.right, y: rect.bottom };
+			resolve?.({ selection, position: point });
+		}, 0);
+	};
+	document.addEventListener("mouseup", notify);
+	document.addEventListener("keyup", notify);
+	document.addEventListener("touchend", notify);
 	try {
-		while (true) {
-			const { promise, resolve } = Promise.withResolvers<SelectEvent>();
-			cancel = listener(resolve);
-			yield await promise;
-		}
+		while (true) yield await new Promise<SelectEvent>((done) => { resolve = done; });
 	} finally {
-		cancel?.();
+		if (timer !== undefined) clearTimeout(timer);
+		document.removeEventListener("mouseup", notify);
+		document.removeEventListener("keyup", notify);
+		document.removeEventListener("touchend", notify);
 	}
 }
-
-const listener = (callback: (data: SelectEvent) => void) => {
-	let canceled = false;
-	let id: NodeJS.Timeout | undefined;
-	const cancel = () => {
-		canceled = true;
-		if (id !== undefined) clearTimeout(id);
-	};
-
-	const work = async () => {
-		const { promise: sPromise, resolve: sResolve } =
-			Promise.withResolvers<Event>();
-		const { promise: pointerPromise, resolve: pointerResolve } =
-			Promise.withResolvers<MouseEvent | TouchEvent>();
-		try {
-			document.addEventListener("selectstart", sResolve, {
-				once: true,
-				passive: true,
-			});
-			const _sData = await sPromise;
-
-			const mouseupHandler = (e: MouseEvent) => pointerResolve(e);
-			const touchendHandler = (e: TouchEvent) => pointerResolve(e);
-
-			document.addEventListener("mouseup", mouseupHandler, {
-				once: true,
-				passive: true,
-			});
-			document.addEventListener("touchend", touchendHandler, {
-				once: true,
-				passive: true,
-			});
-
-			const pointerData = await pointerPromise;
-
-			document.removeEventListener("mouseup", mouseupHandler);
-			document.removeEventListener("touchend", touchendHandler);
-
-			const selection = window.getSelection();
-			const text = selection?.toString().trim();
-			if (selection && hasMeaningfulChars(text)) {
-				let x: number;
-				let y: number;
-
-				if (pointerData instanceof MouseEvent) {
-					x = pointerData.clientX;
-					y = pointerData.clientY;
-				} else {
-					const touch = pointerData.changedTouches[0];
-					x = touch.clientX;
-					y = touch.clientY;
-				}
-
-				callback({
-					selection,
-					position: { x, y },
-				});
-				return;
-			}
-
-			if (!canceled) id = setTimeout(work, 0);
-		} finally {
-			document.removeEventListener("selectstart", sResolve);
-		}
-	};
-	id = setTimeout(work, 0);
-
-	return cancel;
-};
