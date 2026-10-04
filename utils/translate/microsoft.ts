@@ -55,7 +55,7 @@ export const microsoftTranslate = async (
 				lastTimestamp = Date.now();
 			} catch (error) {
 				console.error(error);
-				apiKey = "";
+				throw new Error(t("readingService.unavailable"));
 			}
 		}
 		headers.Authorization = `Bearer ${apiKey}`;

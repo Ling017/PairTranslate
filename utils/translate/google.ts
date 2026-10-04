@@ -10,6 +10,38 @@ export const googleTranslate = async (
 	config: TranslationConfig,
 	params: TranslationParams,
 ): Promise<TranslationResult> => {
+	if (config.apiKey === "public") {
+		const translatedText: string[] = [];
+		for (const text of params.text) {
+			const query = new URLSearchParams({
+				client: "gtx",
+				sl: params.sourceLang || "auto",
+				tl: params.targetLang,
+				dt: "t",
+				q: text,
+			});
+			const response = await fetch(
+				`https://translate.googleapis.com/translate_a/single?${query}`,
+				{ signal: params.signal },
+			);
+			if (!response.ok)
+				throw new Error(
+					t("errors.additional.googleApiError", [String(response.status)]),
+				);
+			const data = await response.json();
+			if (!Array.isArray(data?.[0]))
+				throw new Error(t("errors.translationFailed"));
+			const result = data[0]
+				.filter(
+					(part: unknown) => Array.isArray(part) && typeof part[0] === "string",
+				)
+				.map((part: string[]) => part[0])
+				.join("");
+			if (!result.trim()) throw new Error(t("errors.translationFailed"));
+			translatedText.push(result);
+		}
+		return { translatedText };
+	}
 	const apiUrl =
 		config.baseUrl ||
 		"https://translation.googleapis.com/language/translate/v2";

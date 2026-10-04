@@ -671,3 +671,9 @@ learn = "学一下这个表达"
 selectionOnly = "只翻译所选片段"
 meaning = "整句意思"
 configureAI = "请在设置中配置 AI 解释模型，启用表达学习。"
+
+[readingService]
+usePublic = "切换到免 Key 翻译"
+publicNotice = "将句子发给 Google 公共翻译服务；该服务可能受网络限制，稳定性无保证。"
+settings = "设置翻译服务"
+unavailable = "默认 Microsoft 免 Key 服务不可用，请切换翻译服务。"

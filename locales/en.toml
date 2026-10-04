@@ -671,3 +671,9 @@ learn = "Learn this expression"
 selectionOnly = "Translate selection only"
 meaning = "Sentence meaning"
 configureAI = "Configure an AI explanation model in settings to learn expressions."
+
+[readingService]
+usePublic = "Try free Google translation"
+publicNotice = "This sends the selected sentence to Google’s public service; availability is not guaranteed."
+settings = "Open service settings"
+unavailable = "The default free Microsoft service is unavailable. Choose a different service."

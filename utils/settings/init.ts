@@ -1,6 +1,6 @@
 import { browser } from "#imports";
 import { STORAGE_KEYS } from "~/utils/constants";
-import { generateDefaultSettings } from "./default";
+import { generateDefaultSettings, generateServicesSettings } from "./default";
 import {
 	clearSettingsMigrationError,
 	type SettingsMigrationErrorState,
@@ -17,6 +17,8 @@ export async function initializeSettings(): Promise<void> {
 			});
 		} else {
 			const final = migrateSettings(res[STORAGE_KEYS.settings]);
+			const publicId = "514e1362-6c8b-4cda-9d10-62b8c3de52c1";
+			if (!final.services[publicId]) final.services[publicId] = generateServicesSettings()[publicId];
 			await browser.storage.local.set({
 				[STORAGE_KEYS.settings]: final,
 			});

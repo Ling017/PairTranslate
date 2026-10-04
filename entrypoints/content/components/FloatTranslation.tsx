@@ -18,6 +18,7 @@ import {
 	Show,
 	splitProps,
 } from "solid-js";
+import { browser } from "#imports";
 import { Badge } from "~/components/Badge";
 import { Button } from "~/components/Button";
 import Dict from "~/components/Dict";
@@ -246,7 +247,7 @@ const Explain = (props: { textContext: TextContext }) => {
 };
 
 const Translate = (props: { textContext: TextContext }) => {
-	const { settings } = useSettings();
+	const { settings, setSettings } = useSettings();
 	const [data, retry] = createTranslation(() => props.textContext.text, {
 		promptId: "translate",
 		modelId: () => settings.translate.floatingTranslateModel,
@@ -273,7 +274,47 @@ const Translate = (props: { textContext: TextContext }) => {
 					{t("reading.meaning")}
 				</div>
 				{data.loading && <Loading size="xs" />}
-				{data.error && <p class="text-sm text-error">{data.error.message}</p>}
+				{data.error && (
+					<div class="space-y-2">
+						<p class="text-sm text-error">
+							{settings.services[
+								settings.translate.floatingTranslateModel ?? ""
+							]?.apiKey === "edge"
+								? t("readingService.unavailable")
+								: data.error.message}
+						</p>
+						<p class="text-xs">{t("readingService.publicNotice")}</p>
+						<Button
+							size="sm"
+							onClick={() => {
+								const id = "514e1362-6c8b-4cda-9d10-62b8c3de52c1";
+								setSettings((prev) => ({
+									...prev,
+									services: {
+										...prev.services,
+										[id]: {
+											name: "Google public (experimental)",
+											type: "traditional" as const,
+											apiSpec: "google" as const,
+											apiKey: "public",
+										},
+									},
+									translate: { ...prev.translate, floatingTranslateModel: id },
+								}));
+							}}
+						>
+							{t("readingService.usePublic")}
+						</Button>
+						<Button
+							size="sm"
+							onClick={() =>
+								window.open(browser.runtime.getURL("/options.html"), "_blank")
+							}
+						>
+							{t("readingService.settings")}
+						</Button>
+					</div>
+				)}
 				{data() && <span class="text-sm font-s">{data()}</span>}
 				<Show when={data.reasoning}>
 					{(reasoning) => (

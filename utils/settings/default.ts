@@ -58,6 +58,9 @@ export function generateServicesSettings(): s.ServicesSettings {
 	const supportBrowserTranslator =
 		"Translator" in globalThis && "LanguageDetector" in globalThis;
 	const services: s.ServicesSettings = {
+		["514e1362-6c8b-4cda-9d10-62b8c3de52c1"]: {
+			name: "Google public (experimental)", type: "traditional", apiSpec: "google", apiKey: "public",
+		},
 		[MS_TRANSLATOR_ID]: {
 			name: t("services.microsoftTranslatorDefault"),
 			type: "traditional",
