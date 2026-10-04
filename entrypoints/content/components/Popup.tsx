@@ -152,6 +152,11 @@ const PopupImpl = (props: ImplProps) => {
 
 	onMount(() => {
 		const resize = () => setPositionBounds(updatePositionBounds);
+		const escape = (event: KeyboardEvent) => {
+			if (event.key === "Escape" && props.visible && !props.pinned) props.setState("visible", false);
+		};
+		window.addEventListener("keydown", escape);
+		onCleanup(() => window.removeEventListener("keydown", escape));
 		resize();
 
 		window.addEventListener("resize", resize, { passive: true });

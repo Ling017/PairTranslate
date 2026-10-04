@@ -14,6 +14,7 @@ import {
 	createMemo,
 	createSignal,
 	Index,
+	onCleanup,
 	Show,
 	splitProps,
 } from "solid-js";
@@ -33,6 +34,7 @@ import { autoParseJson, jsonAutocomplete } from "~/utils/json-autocomplete";
 import { getPageContext } from "~/utils/page-context";
 import type { ExplainOutput } from "~/utils/prompt";
 import type { TextContext } from "~/utils/types";
+import { sentenceContext } from "../context/sentence";
 
 interface Props extends JSX.HTMLAttributes<HTMLDivElement> {
 	textContext: TextContext;
@@ -41,28 +43,71 @@ interface Props extends JSX.HTMLAttributes<HTMLDivElement> {
 
 export default (props: Props) => {
 	const [local, rest] = splitProps(props, ["class", "textContext", "mode"]);
-
+	const context = createMemo(() => sentenceContext(local.textContext));
+	const [selectionOnly, setSelectionOnly] = createSignal(false);
+	const { settings } = useSettings();
 	return (
 		<div class={cn("w-full h-full", local.class)} {...rest}>
-			<div class="align-middle font-mono text-sm h-24 whitespace-break-spaces overflow-y-auto no-scrollbar">
-				<span>{props.textContext.surr?.before}</span>
-				<span
-					class="font-bold bg-accent text-accent-content"
-					ref={(ref) => {
-						setTimeout(() => {
-							ref.scrollIntoView({ behavior: "smooth", block: "center" });
-						}, 300);
-					}}
-				>
-					{props.textContext.text}
-				</span>
-				<span>{props.textContext.surr?.after}</span>
+			<div class="p-3 text-base leading-relaxed whitespace-pre-wrap max-h-40 overflow-y-auto">
+				<span>{context().surr?.before}</span>
+				<mark class="font-bold bg-accent text-accent-content rounded px-1">
+					{context().text}
+				</mark>
+				<span>{context().surr?.after}</span>
 			</div>
-			{local.mode === "translate" ? (
-				<Translate textContext={local.textContext} />
-			) : (
-				<Explain textContext={local.textContext} />
-			)}
+			<label class="flex gap-2 items-center px-3 text-xs">
+				<input
+					type="checkbox"
+					checked={selectionOnly()}
+					onChange={(e) => setSelectionOnly(e.currentTarget.checked)}
+				/>
+				{t("reading.selectionOnly")}
+			</label>
+			<Translate
+				textContext={
+					selectionOnly()
+						? { text: context().text }
+						: {
+								text: `${context().surr?.before ?? ""}${context().text}${context().surr?.after ?? ""}`,
+							}
+				}
+			/>
+			<details class="mx-2 mb-3 rounded-box border border-base-300 p-3">
+				<summary class="cursor-pointer text-sm font-semibold">
+					{t("reading.learn")}
+				</summary>
+				<LearningExplanation
+					textContext={context()}
+					modelConfigured={!!settings.translate.floatingExplainModel}
+				/>
+			</details>
+		</div>
+	);
+};
+
+const LearningExplanation = (props: {
+	textContext: TextContext;
+	modelConfigured: boolean;
+}) => {
+	const [opened, setOpened] = createSignal(false);
+	let marker!: HTMLDivElement;
+	createEffect(() => {
+		const details = marker.closest("details");
+		if (!details) return;
+		const update = () => setOpened(details.open);
+		details.addEventListener("toggle", update);
+		onCleanup(() => details.removeEventListener("toggle", update));
+	});
+	return (
+		<div ref={marker}>
+			<Show when={opened()}>
+				<Show
+					when={props.modelConfigured}
+					fallback={<p class="text-sm p-2">{t("reading.configureAI")}</p>}
+				>
+					<Explain textContext={props.textContext} />
+				</Show>
+			</Show>
 		</div>
 	);
 };
@@ -225,8 +270,10 @@ const Translate = (props: { textContext: TextContext }) => {
 			<div class="p-2 bg-base-100 rounded-box">
 				<div class="flex items-center gap-2 mb-2 text-sm text-base-content/80">
 					<Languages size={16} />
-					{t("floatingTranslator.sections.translation")}
+					{t("reading.meaning")}
 				</div>
+				{data.loading && <Loading size="xs" />}
+				{data.error && <p class="text-sm text-error">{data.error.message}</p>}
 				{data() && <span class="text-sm font-s">{data()}</span>}
 				<Show when={data.reasoning}>
 					{(reasoning) => (

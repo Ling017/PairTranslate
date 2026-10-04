@@ -1,5 +1,5 @@
 [meta]
-name = "Pair Translate"
+name = "English Reading Companion"
 description = "A browser extension for side-by-side translation of web pages"
 
 # Navigation
@@ -664,3 +664,10 @@ addRule = "Add Rule"
 deleteRule = "Delete Rule"
 deleteAllPatterns = "Delete All"
 patternsCount = "pattern(s)"
+
+[reading]
+understand = "Understand this sentence"
+learn = "Learn this expression"
+selectionOnly = "Translate selection only"
+meaning = "Sentence meaning"
+configureAI = "Configure an AI explanation model in settings to learn expressions."

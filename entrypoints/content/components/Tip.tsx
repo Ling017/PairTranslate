@@ -1,10 +1,11 @@
-import { Languages, Lightbulb } from "lucide-solid";
+import { Languages } from "lucide-solid";
 import { createEffect, createSignal, Show } from "solid-js";
 import { Button } from "~/components/Button";
 import { Menu } from "~/components/Menu";
 import { createAnimatedAppearance, onOuterClick } from "~/hooks/animation";
 import { useSettings } from "~/hooks/settings";
 import { t } from "~/utils/i18n";
+import type { TextContext } from "~/utils/types";
 import { extractContextFromSelection } from "../context/select";
 import type { Position, SelectEvent } from "../types";
 import FloatTranslation from "./FloatTranslation";
@@ -20,6 +21,9 @@ export default (props: Props) => {
 	const { addPopup } = usePopup();
 	const { settings } = useSettings();
 
+	const [savedContext, setSavedContext] = createSignal<TextContext | null>(
+		null,
+	);
 	const [show, setShow] = createSignal(false);
 	const shouldRender = createAnimatedAppearance(ref, show);
 	onOuterClick(ref, () => setShow(false), show);
@@ -41,12 +45,14 @@ export default (props: Props) => {
 		if (!props.event) return;
 		setShow(false);
 
-		const selection = props.event.selection;
-		const textContext = extractContextFromSelection(selection);
+		const textContext = savedContext();
 		if (!textContext?.text) return;
 
 		addPopup({
 			...pos,
+			width: Math.min(440, window.innerWidth - 24),
+			x: Math.min(pos.x, Math.max(12, window.innerWidth - 452)),
+			y: Math.min(pos.y, Math.max(12, window.innerHeight - 492)),
 			pinned: settings.basic.autoPin,
 			content: () => (
 				<FloatTranslation mode={action} textContext={textContext} />
@@ -56,6 +62,7 @@ export default (props: Props) => {
 
 	createEffect(() => {
 		if (props.event) {
+			setSavedContext(extractContextFromSelection(props.event.selection));
 			setShow(true);
 		}
 	});
@@ -82,21 +89,12 @@ export default (props: Props) => {
 						class="tooltip"
 						variant="ghost"
 						size="xs"
+						onMouseDown={(e) => e.preventDefault()}
 						onClick={() => handleClick("translate")}
-						data-tip={t("actions.translate")}
+						data-tip={t("reading.understand")}
 					>
 						<Languages size={16} />
-					</Button>
-				</Menu.Item>
-				<Menu.Item>
-					<Button
-						class="tooltip"
-						variant="ghost"
-						size="xs"
-						onClick={() => handleClick("explain")}
-						data-tip={t("actions.explain")}
-					>
-						<Lightbulb size={16} />
+						{t("reading.understand")}
 					</Button>
 				</Menu.Item>
 			</Menu.Root>

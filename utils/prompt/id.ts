@@ -20,7 +20,7 @@ export type PromptId =
  * cached model output. It is part of the cache key, so old entries are ignored
  * rather than served against a prompt that no longer produced them.
  */
-export const PROMPT_REVISION = 2;
+export const PROMPT_REVISION = 3;
 
 /** What each prompt's `parse` produces from a completed (non-streamed) response. */
 export type PromptOutputMap = {

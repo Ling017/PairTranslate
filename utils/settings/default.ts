@@ -14,7 +14,7 @@ export function generateBasicSettings(): s.BasicSettings {
 		theme: "system",
 		selectionPopupEnabled: true,
 		autoPin: false,
-		floatingBallEnabled: true,
+		floatingBallEnabled: false,
 		floatingBallPosition: {
 			side: "right",
 			top: 20,
@@ -44,7 +44,7 @@ export function generateTranslateSettings(): s.TranslateSettings {
 		targetLang: targetLang,
 		filterInteractive: true,
 		translationMode: "parallel",
-		inTextTranslateIconEnabled: true,
+		inTextTranslateIconEnabled: false,
 		translateFullPage: false,
 		inTextTranslateModel: MS_TRANSLATOR_ID,
 		floatingTranslateModel: MS_TRANSLATOR_ID,

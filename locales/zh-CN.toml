@@ -664,3 +664,10 @@ addRule = "添加规则"
 deleteRule = "删除规则"
 deleteAllPatterns = "全部删除"
 patternsCount = "个模式"
+
+[reading]
+understand = "读懂这句"
+learn = "学一下这个表达"
+selectionOnly = "只翻译所选片段"
+meaning = "整句意思"
+configureAI = "请在设置中配置 AI 解释模型，启用表达学习。"
